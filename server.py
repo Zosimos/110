@@ -33,16 +33,23 @@ def version():
 
 @app.get("/api/catalog")
 def get_catalog():
-    return json.dumps(catalog)
+    cursor = db.products.find({})
+    results = []
+    for prod in cursor: #travel cursor
+        prod["_id"] = str(prod["_id"]) #fix _id issue
+        results.append(prod)
+    return json.dumps(results)
 
 #get product by category
 @app.get("/api/catalog/<category>")
 def get_by_category(category):
-    result = []
-    for prod in catalog:
-        if prod ["category"].lower() ==category.lower():
-            result.append(prod)
-    return json.dumps(result)
+    cursor = db.products.find({"category": category})
+    #create a list, travel the cursor, fix the id, add it to the list, return list
+    results = []
+    for prod in cursor:
+        prod["_id"] = str(prod["_id"])
+        results.append(prod)
+    return json.dumps(results)
 
 #create endpoint to save products
 @app.post("/api/catalog")
@@ -58,41 +65,44 @@ def save_product():
 @app.get("/api/catalog/search/<title>")
 def search_by_title(title):
     #return all products whose title CONTAINS the title variable
-    result = []
-    for prod in catalog:
-        if title.lower() in prod["title"].lower():
-            result.append(prod)
+    cursor = db.products.find({"title": {"$regex": title, "$options": "i"}}) #this will allow searching by title to return results near to what the user searched for
+    results = []
+    for prod in cursor:
+        prod["_id"] = str(prod["_id"])
+        results.append(prod)
+    return json.dumps(results)
             
-
-    return json.dumps(result)
 
 #return product with price less than 10 or 23
 
-@app.get("/api/catalog/search/<price>")
+@app.get("/api/catalog/price/<price>")
 def search_by_price(price):
-    result = []
-    for prod in catalog:
+    #get all the products, travel cursor instead of catalog
+    cursor = db.products.find({})
+    results = []
+    for prod in cursor:
         if prod["price"] < float(price):
-            result.append(prod)
-
-    return json.dumps(result)
+            prod["_id"] = str(prod["_id"])
+            results.append(prod)
+    return json.dumps(results)
 
     #create a get endpoint that returns the number of products in the catalog
 @app.get("/api/product/count")
 def count_products():
-    count = len(catalog)
+    count = db.products.count_documents({})
     return json.dumps(count)
     #or json.dumps(len(catalog))
 
 #return the cheapest product
 @app.get("/api/catalog/cheapest")
 def cheapest_product():
-    answer = catalog[0]
-    for prod in catalog:
+    cursor = db.products.find({})
+    answer = cursor[0]
+    for prod in cursor:
         if prod["price"] < answer["price"]:
-            answer = prod
-
-    return json.dumps(answer)
+            answer = prod           
+    prod["_id"] = str(prod["_id"])           
+    return json.dumps(prod)
 
 
 @app.get('/test/numbers')
