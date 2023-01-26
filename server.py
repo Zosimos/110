@@ -2,9 +2,11 @@ from flask import Flask, request
 import json
 from mock_data import catalog
 from config import db
+from flask_cors import CORS
 
 
 app = Flask("server")
+CORS(app) #disable CORS to allow request from any origin
 
 @app.get("/")
 def home():
